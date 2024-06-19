@@ -7,5 +7,26 @@ use Illuminate\Database\Eloquent\Model;
 
 class Temperature extends Model
 {
-    use HasFactory;
+  use HasFactory;
+
+    /**
+     *
+     * @var array
+     */
+    protected $fillable = [
+			'city',
+			'temperature',
+			'humidity',
+			'wind_speed',
+			'description',
+			'timestamp',
+    ];
+
+    /**
+     *
+     * @var array
+     */
+    protected $casts = [
+			'timestamp' => 'datetime',
+    ];
 }

@@ -25,42 +25,46 @@ class FetchTemperature extends Command
      */
     public function handle()
     {
-        $city = env('CITY');
-        $apiKey = env('OPENWEATHER_API_KEY');
-        
-        // get the coordinates by city
-        $geoResponse = Http::get("http://api.openweathermap.org/geo/1.0/direct?q={$city}&limit=5&appid={$apiKey}");
-        
-        if ($geoResponse->successful() && count($geoResponse->json()) > 0) {
-            $geoData = $geoResponse->json()[0];
-            $lat = $geoData['lat'];
-            $lon = $geoData['lon'];
+        try {
+            $city = env('CITY');
+            $apiKey = env('OPENWEATHER_API_KEY');
 
-            // get the weather by coordinates of the city
-            $weatherResponse = Http::get("https://api.openweathermap.org/data/2.5/weather?lat={$lat}&lon={$lon}&appid={$apiKey}&units=metric");
+            // Get city coordinates
+            $geoResponse = Http::get("http://api.openweathermap.org/geo/1.0/direct?q={$city}&limit=5&appid={$apiKey}");
 
-            if ($weatherResponse->successful()) {
-							$weatherData = $weatherResponse->json();
-							$temperature = $weatherData['main']['temp'];
-							$humidity = $weatherData['main']['humidity'];
-							$windSpeed = $weatherData['wind']['speed'];
-							$description = $weatherData['weather'][0]['description'];
+            if ($geoResponse->successful() && count($geoResponse->json()) > 0) {
+                $geoData = $geoResponse->json()[0];
+                $lat = $geoData['lat'];
+                $lon = $geoData['lon'];
 
-							Temperature::create([
-									'city' => $city,
-									'temperature' => $temperature,
-									'humidity' => $humidity,
-									'wind_speed' => $windSpeed,
-									'description' => $description,
-									'timestamp' => now(),
-							]);
+                // Get weather data
+                $weatherResponse = Http::get("https://api.openweathermap.org/data/2.5/weather?lat={$lat}&lon={$lon}&appid={$apiKey}&units=metric");
 
-							$this->info('Temperature data fetched and saved.');
-					} else {
-							$this->error('Failed to fetch weather data.');
-					}
-        } else {
-            $this->error('Failed to fetch geo data.');
+                if ($weatherResponse->successful()) {
+                    $weatherData = $weatherResponse->json();
+                    $temperature = $weatherData['main']['temp'];
+                    $humidity = $weatherData['main']['humidity'];
+                    $windSpeed = $weatherData['wind']['speed'];
+                    $description = $weatherData['weather'][0]['description'];
+
+                    Temperature::create([
+                        'city' => $city,
+                        'temperature' => $temperature,
+                        'humidity' => $humidity,
+                        'wind_speed' => $windSpeed,
+                        'description' => $description,
+                        'timestamp' => now(),
+                    ]);
+
+                    $this->info('Temperature data fetched and saved.');
+                } else {
+                    $this->error('Failed to fetch weather data.');
+                }
+            } else {
+                $this->error('Failed to fetch geo data.');
+            }
+        } catch (Exception $e) {
+            $this->error('An error occurred: ' . $e->getMessage());
         }
     }
 }

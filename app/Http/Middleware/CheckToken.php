@@ -15,6 +15,10 @@ class CheckToken
      */
     public function handle(Request $request, Closure $next): Response
     {
-        return $next($request);
+      $token = $request->header('x-token');
+			if ($token !== env('X_TOKEN')) {
+					return response()->json(['error' => 'Unauthorized'], 401);
+			}
+			return $next($request);
     }
 }
